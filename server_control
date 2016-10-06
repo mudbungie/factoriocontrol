@@ -1,0 +1,41 @@
+#!/usr/bin/python3
+
+from sys import argv, exit
+import re
+import os
+import subprocess
+
+# This is a command-line executable for managing factorio servers.
+
+path = os.path.dirname(os.path.abspath(__file__))
+
+def verify_args():
+	# Sanity checks
+	usage = 'server_control factorio_name <start|status|stop>'
+	command = re.compile(r'start|status|stop')
+	if len(argv) != 3 or not command.match(argv[1]):
+		exit(usage)
+
+def check_current_status(game_name=None):
+		if len(games = 0):
+			return None
+
+def get_statuses():
+	try:
+		with open(path + os.sep + 'factorio_games.pid') as pidfile:
+			games = dict(game.strip().split('=') for game in pidfile.readlines())
+	except FileNotFoundError:
+		exit('pid file not found')
+	return games
+
+def start_game():
+	subprocess.call()
+
+def execute_commands():
+	if argv[2] == 'start':
+		pass
+		
+if __name__ == '__main__':
+	get_statuses()
+	verify_args()
+	execute_commands()

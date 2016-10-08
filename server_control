@@ -4,38 +4,79 @@ from sys import argv, exit
 import re
 import os
 import subprocess
+import time
 
 # This is a command-line executable for managing factorio servers.
 
 path = os.path.dirname(os.path.abspath(__file__))
+factorio_root = '/home/factorio/factorio'
+binary_path = factorio_root + '/bin/x64/factorio'
+saves_path = factorio_root + '/saves'
+logs_path = factorio_root + '/logs'
+pidfile = path + '/factorio_games.pid'
+lockfile = path + '/server_control.lock'
+usage = 'server_control factorio_name <start|status|stop>'
 
 def verify_args():
 	# Sanity checks
-	usage = 'server_control factorio_name <start|status|stop>'
 	command = re.compile(r'start|status|stop')
 	if len(argv) != 3 or not command.match(argv[1]):
 		exit(usage)
 
 def check_current_status(game_name=None):
-		if len(games = 0):
-			return None
+	if len(games = 0):
+		return None
 
 def get_statuses():
 	try:
 		with open(path + os.sep + 'factorio_games.pid') as pidfile:
-			games = dict(game.strip().split('=') for game in pidfile.readlines())
+			games = dict([game.strip().split('=') for game in pidfile.readlines()])
 	except FileNotFoundError:
-		exit('pid file not found')
+		return {} # That's fine. Probably implies first run.
 	return games
 
-def start_game():
-	subprocess.call()
+def start_game(name, latency=300):
+	# Make sure that something isn't being processes presently.
+	try:
+		os.stat(lockfile)
+		exit('Conflicting lockfile: ' + lockfile)
+	except FileNotFoundError:
+		with open(lockfile, 'a') as lock:
+			lock.write(str(time.time()))
+		# First, see if it's already running.
+		current_games = get_statuses()
+		try:
+			current_games[name]
+			exit(name + ' is already running')
+		except KeyError:
+			# No game by that name is running. Go ahead and start it.
+			# First thing, prepare a log file to record the output.
+			try:
+				output_file = open(logs_path + '/' + name + '.log', 'w')
+			except FileNotFoundError:
+				os.mkdir(logs_path)
+				output_file = open(logs_path + '/' + name + '.log', 'w')
+			command = [binary_path, '--start-server', saves_path + name + '.zip', '--latency-ms', str(latency)]
+			print(' '.join(command))
+			game = subprocess.Popen(command, stdout=output_file)
+			with open(pidfile, 'a') as pid:
+				pid.write(name + '=' + str(game.pid) + '\n')
+			os.remove(lockfile)
 
 def execute_commands():
-	if argv[2] == 'start':
-		pass
-		
+	if argv[1] == 'start':
+		# Get rid of metacharacters for this system from the name.	
+		try:
+			if '.' in argv[2] or '=' in argv[2]:
+				exit('= and . not permitted in game names.')
+			start_game(argv[2])
+		except IndexError:
+m		exit(usage)
+	else:
+		print(usage)
+		exit('Unsupported instruction: ', argv[1])
+	
 if __name__ == '__main__':
-	get_statuses()
 	verify_args()
+	get_statuses()
 	execute_commands()

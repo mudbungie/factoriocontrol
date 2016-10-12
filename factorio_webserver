@@ -4,8 +4,7 @@ import server_control
 
 from bottle import run, get, post, request
 
-@get('/')
-def index():
+def statuspage():
 	response = ''
 	response += '<body>'
 	response += '<table>'
@@ -22,14 +21,20 @@ def index():
 	response += '</body>'
 	return response
 
+@get('/')
+def index():
+	return statuspage()
+
 @post('/start')
 def start_game():
 	game = request.forms.get('game')
 	server_control.start_game(game)
+	return statuspage()
 @post('/stop')
 def stop_game():
 	game = request.forms.get('game')
 	server_control.stop_game(game)
+	return statuspage()
 	
 if __name__ == '__main__':
 	run(host='0.0.0.0', port=8000, debug=True)

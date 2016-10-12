@@ -36,24 +36,25 @@ def get_pids():
 	return games
 
 def start_game(name, latency=300):
-	# First, see if it's already running.
-	if get_status(name):
+	if check_lockfile():
+		# First, see if it's already running.
+		if get_status(name):
+			os.remove(lockfilepath)
+			exit(name + ' is already running')
+		# No game by that name is running. Go ahead and start it.
+		# First thing, prepare a log file to record the output.
+		try:
+			output_file = open(logs_path + name + '.log', 'w')
+		except FileNotFoundError:
+			os.mkdir(logs_path)
+			output_file = open(logs_path + name + '.log', 'w')
+		command = [binary_path, '--start-server', saves_path + name + '.zip', '--latency-ms', str(latency)]
+		#print(' '.join(command))
+		game = subprocess.Popen(command, stdout=output_file)
+		with open(pidfilepath, 'a') as pidfile:
+			pidfile.write(name + '=' + str(game.pid) + '\n')
+		print('Game {} started with pid {}'.format(name, game.pid))
 		os.remove(lockfilepath)
-		exit(name + ' is already running')
-	# No game by that name is running. Go ahead and start it.
-	# First thing, prepare a log file to record the output.
-	try:
-		output_file = open(logs_path + name + '.log', 'w')
-	except FileNotFoundError:
-		os.mkdir(logs_path)
-		output_file = open(logs_path + name + '.log', 'w')
-	command = [binary_path, '--start-server', saves_path + name + '.zip', '--latency-ms', str(latency)]
-	#print(' '.join(command))
-	game = subprocess.Popen(command, stdout=output_file)
-	with open(pidfilepath, 'a') as pidfile:
-		pidfile.write(name + '=' + str(game.pid) + '\n')
-	print('Game {} started with pid {}'.format(name, game.pid))
-	os.remove(lockfilepath)
 	
 # Returns True if a game by that name is running. Else False.
 def get_status(name):
@@ -80,12 +81,14 @@ def check_status(name):
 	
 # Kill the game by sending sigint.
 def stop_game(name):
-	if get_status(name):
-		p = psutil.Process(int(get_pids()[name]))
-		p.send_signal(2)
-		purge_game_from_pids(name)
-	else:
-		print('Kill command failed. {} wasn\'t running!'.format(name))
+	if check_lockfile():
+		# Make sure that we don't have collisions.
+		if get_status(name):
+			p = psutil.Process(int(get_pids()[name]))
+			p.send_signal(2)
+			purge_game_from_pids(name)
+		else:
+			print('Kill command failed. {} wasn\'t running!'.format(name))
 	os.remove(lockfilepath)
 
 def purge_game_from_pids(name):
@@ -113,19 +116,17 @@ def get_available_games():
 	return saves
 
 def execute_commands():
-	if check_lockfile():
-	# Make sure that we don't have collisions.
-		if argv[1] == 'start':
-			# Get rid of metacharacters for this system from the name.	
-			start_game(argv[2])
-		elif argv[1] == 'status':
-			check_status(argv[2])
-		elif argv[1] == 'stop':
-			stop_game(argv[2])
-		else:
-			os.remove(lockfilepath)
-			print(usage)
-			exit('Unsupported instruction: ', argv[1])
+	if argv[1] == 'start':
+		# Get rid of metacharacters for this system from the name.	
+		start_game(argv[2])
+	elif argv[1] == 'status':
+		check_status(argv[2])
+	elif argv[1] == 'stop':
+		stop_game(argv[2])
+	else:
+		os.remove(lockfilepath)
+		print(usage)
+		exit('Unsupported instruction: ', argv[1])
 	
 if __name__ == '__main__':
 	verify_args()

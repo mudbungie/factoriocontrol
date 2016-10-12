@@ -33,7 +33,10 @@ def index():
 @post('/start')
 def start_game():
 	game = request.forms.get('game')
-	server_control.start_game(game)
+	try:
+		server_control.start_game(game)
+	except SystemExit:
+		pass
 	return statuspage()
 @post('/stop')
 def stop_game():

@@ -23,7 +23,7 @@ def verify_args():
 	command = re.compile(r'start|status|stop')
 	if len(argv) != 3 or not command.match(argv[1]):
 		exit(usage)
-	if '=' in argv[2] or '.' in argv[2]:
+	if '=' in argv[2] or '.' in argv[2] or '_' in argv[2]:
 		exit('= and . not permitted in game names.')
 
 # Return name:pid dictionary of all running games.
@@ -104,6 +104,13 @@ def check_lockfile():
 		with open(lockfilepath, 'a') as lock:
 			lock.write(str(time.time()))
 			return True
+
+# Return all .zip files in the saves path that don't start with _
+def get_available_games():
+	saves = os.listdir(saves_path)
+	saves = [save[:-4] for save in saves if save.endswith('.zip') and not 
+		save.startswith('_')]
+	return saves
 
 def execute_commands():
 	if check_lockfile():

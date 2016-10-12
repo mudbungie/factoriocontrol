@@ -1,0 +1,35 @@
+#!/usr/bin/python3
+
+import server_control
+
+from bottle import run, get, post, request
+
+@get('/')
+def index():
+	response = ''
+	response += '<body>'
+	response += '<table>'
+	for save in server_control.get_available_games():
+		response += '<tr><td>' + save + '</td>'
+		response += '<form action="/start" method="post">'
+		response += '<td><button name="game" value="' + save + '">start</td>'
+		response += '</form>'
+		response += '<form action="/stop" method="post">'
+		response += '<td><button name="game" value="' + save + '">stop</td>'
+		response += '</form>'
+		response += '</tr>'
+	response += '</table>'
+	response += '</body>'
+	return response
+
+@post('/start')
+def start_game():
+	game = request.forms.get('game')
+	server_control.start_game(game)
+@post('/stop')
+def stop_game():
+	game = request.forms.get('game')
+	server_control.stop_game(game)
+	
+if __name__ == '__main__':
+	run(host='0.0.0.0', port=8000, debug=True)

@@ -112,7 +112,7 @@ def check_lockfile():
 def get_available_games():
 	saves = os.listdir(saves_path)
 	saves = [save[:-4] for save in saves if save.endswith('.zip') and not 
-		save.startswith('_')]
+		save.endswith('.tmp.zip') and not	save.startswith('_')]
 	return saves
 
 def execute_commands():

@@ -1,5 +1,10 @@
 #!/usr/bin/python3
 
+# This software is covered under the GNU GPLv2
+# https://www.gnu.org/licenses/gpl-2.0.txt
+# Contact the author at mudbungie@gmail.com
+# Copyright 2016 mudbungie
+
 from sys import argv, exit
 import re
 import os

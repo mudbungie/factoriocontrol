@@ -40,7 +40,8 @@ def get_pids():
 		return {} # That's fine. Probably implies first run.
 	return games
 
-def start_game(name, latency=300):
+def start_game(name):
+	print('Attempting to start game {}'.format(name))
 	if check_lockfile():
 		# First, see if it's already running.
 		if get_status(name):
@@ -53,13 +54,18 @@ def start_game(name, latency=300):
 		except FileNotFoundError:
 			os.mkdir(logs_path)
 			output_file = open(logs_path + name + '.log', 'w')
-		command = [binary_path, '--start-server', saves_path + name + '.zip', '--latency-ms', str(latency)]
-		#print(' '.join(command))
+		command = [binary_path, '--start-server', saves_path + name + '.zip']
+
+		print(command)
+		print(' '.join(command))
+
 		game = subprocess.Popen(command, stdout=output_file)
 		with open(pidfilepath, 'a') as pidfile:
 			pidfile.write(name + '=' + str(game.pid) + '\n')
 		print('Game {} started with pid {}'.format(name, game.pid))
 		os.remove(lockfilepath)
+	else:
+		exit('Conflicting lockfile: ' + lockfilepath)
 	
 # Returns True if a game by that name is running. Else False.
 def get_status(name):
@@ -107,9 +113,11 @@ def purge_game_from_pids(name):
 def check_lockfile():
 	try:
 		os.stat(lockfilepath)
-		exit('Conflicting lockfile: ' + lockfilepath)
+		print('Lockfile extant.')
+		return False
 	except FileNotFoundError:
 		with open(lockfilepath, 'a') as lock:
+			print('No lockfile conflict. Proceeding.')
 			lock.write(str(time.time()))
 			return True
 

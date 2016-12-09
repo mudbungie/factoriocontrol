@@ -13,14 +13,17 @@ def statuspage():
 	response = ''
 	response += '<body>'
 	response += '<table>'
+	online_games = server_control.get_pids()
 	for save in server_control.get_available_games():
 		response += '<tr><td>' + save + '</td>'
-		response += '<form action="/start" method="post">'
-		response += '<td><button name="game" value="' + save + '">start</td>'
-		response += '</form>'
-		response += '<form action="/stop" method="post">'
-		response += '<td><button name="game" value="' + save + '">stop</td>'
-		response += '</form>'
+		if save in online_games:
+			response += '<form action="/stop" method="post">'
+			response += '<td><button name="game" value="' + save + '">stop</td>'
+			response += '</form>'
+		else:
+			response += '<form action="/start" method="post">'
+			response += '<td><button name="game" value="' + save + '">start</td>'
+			response += '</form>'
 		response += '</tr>'
 	response += '</table>'
 	response += '</body>'

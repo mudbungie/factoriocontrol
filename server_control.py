@@ -13,6 +13,7 @@ import subprocess
 import time
 
 # This is a command-line executable for managing factorio servers.
+# Many of the internal methods are used for webserver management.
 
 path = os.path.dirname(os.path.abspath(__file__))
 factorio_root = '/home/factorio/factorio'
@@ -88,7 +89,6 @@ def check_status(name):
 		print(('Game {} is currently running.').format(name))
 	else:
 		print(('No game {} is currently running').format(name))
-	os.remove(lockfilepath)
 	
 # Kill the game by sending sigint.
 def stop_game(name):
@@ -100,7 +100,9 @@ def stop_game(name):
 			purge_game_from_pids(name)
 		else:
 			print('Kill command failed. {} wasn\'t running!'.format(name))
-	os.remove(lockfilepath)
+		os.remove(lockfilepath)
+	else:
+		exit('Conflicting lockfile: ' + lockfilepath)
 
 def purge_game_from_pids(name):
 	with open(pidfilepath) as pidfile:
@@ -129,17 +131,20 @@ def get_available_games():
 	return saves
 
 def execute_commands():
-	if argv[1] == 'start':
-		# Get rid of metacharacters for this system from the name.	
-		start_game(argv[2])
-	elif argv[1] == 'status':
-		check_status(argv[2])
-	elif argv[1] == 'stop':
-		stop_game(argv[2])
-	else:
-		os.remove(lockfilepath)
-		print(usage)
-		exit('Unsupported instruction: ', argv[1])
+	try:
+		if argv[1] == 'start':
+			# Get rid of metacharacters for this system from the name.	
+			start_game(argv[2])
+		elif argv[1] == 'status':
+			check_status(argv[2])
+		elif argv[1] == 'stop':
+			stop_game(argv[2])
+		else:
+			os.remove(lockfilepath)
+			print(usage)
+			exit('Unsupported instruction: ', argv[1])
+	except IndexError:
+		exit(usage)
 	
 if __name__ == '__main__':
 	verify_args()
